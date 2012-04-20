@@ -1,0 +1,61 @@
+# makefile discription.
+# basic build file for RiteVM library
+# 11.Oct.2011 coded by Hiroshi Mimaki.
+
+# project-specific macros
+# extension of the executable-file is modifiable(.exe .out ...)
+BASEDIR = .
+TARGET = mrblib
+MLIB = $(TARGET).obj
+CLIB = $(TARGET).c
+DLIB = $(TARGET).ctmp
+RLIB = $(TARGET).rbtmp
+MRB1 = $(BASEDIR)/*.rb
+MRBS = $(MRB1)
+
+# C compiler (vc)
+CC = cl.exe
+DEBUG_MODE = 1
+#if $(DEBUG_MODE) == 1
+CFLAGS = -Zi
+#else
+CFLAGS = -O2
+#endif
+INCLUDES = -I../src -I../include
+ALL_CFLAGS = -nologo -W3 $(CFLAGS)
+MAKE_FLAGS = CC="$(CC)" LL="$(LL)" -$(MAKEFLAGS) -f Makefile.vc
+
+# mruby compiler
+MRBC = ../bin/mrbc.exe
+
+##############################
+# generic build targets, rules
+
+.PHONY : all
+all : $(MRBC) $(MLIB)
+	@echo "make: built targets of mrblib"
+
+# Compile mrblib source
+$(MLIB) : $(CLIB)
+	$(CC) $(ALL_CFLAGS) $(INCLUDES) -c $(CLIB) -Fo$(MLIB)
+
+# Compile C source from merged mruby source
+$(CLIB) : $(RLIB) $(MRBC)
+	$(MRBC:/=\) -Bmrblib_irep -o$(DLIB) $(RLIB)
+	cat init_$(TARGET).c $(DLIB) > $@
+
+$(MRBC) : ../src/opcode.h ../src/codegen.c ../src/parse.y
+	cd ..\tools\mrbc
+	$(MAKE) $(MAKE_FLAGS)
+	cd ..\..\mrblib
+
+# merge mruby sources
+$(RLIB) : $(MRBS)
+	cat $? > $@
+
+# clean up
+#.PHONY : clean
+clean :
+	-rm -f $(MRBC) $(MLIB) $(CLIB) $(RLIB) $(DLIB)
+	@echo "make: removing targets, objects and depend files of mrblib"
+
