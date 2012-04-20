@@ -470,11 +470,7 @@ void mrb_bug(const char *fmt, ...);
 #ifdef __GNUC__
 # define NUM2CHR(x) __extension__ ({mrb_value num2chr_x = (x); NUM2CHR_internal(num2chr_x);})
 #else
-<<<<<<< HEAD
 /* TODO: there is no definitions of RSTRING_* here, so cannot compile.
-=======
-/* TODO: there is no definitions of RSTRING_*
->>>>>>> 4b64f2ad67623623e4be01da46486f6154deb130
 static inline char
 NUM2CHR(mrb_value x)
 {
