@@ -100,6 +100,12 @@ static uint8_t __m[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
   static inline khint_t kh_put_##name(kh_##name##_t *h, khkey_t key);   \
   static void kh_resize_##name(kh_##name##_t *h, khint_t new_n_buckets) \
   {                                                                     \
+    uint8_t *old_e_flags;                                               \
+    uint8_t *old_d_flags;                                               \
+    khkey_t *old_keys;                                                  \
+    khval_t *old_vals;                                                  \
+    khint_t old_n_buckets;                                              \
+    khint_t i;                                                          \
     if( new_n_buckets<INITIAL_HASH_SIZE ){                              \
       new_n_buckets = INITIAL_HASH_SIZE;                                \
     } else {                                                            \
@@ -107,15 +113,14 @@ static uint8_t __m[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
       new_n_buckets = INITIAL_HASH_SIZE;                                \
       while( new_n_buckets < limit ) new_n_buckets *= 2;                \
     }                                                                   \
-    uint8_t *old_e_flags = h->e_flags;                                  \
-    uint8_t *old_d_flags = h->d_flags;                                  \
-    khkey_t *old_keys = h->keys;                                        \
-    khval_t *old_vals = h->vals;                                        \
-    khint_t old_n_buckets = h->n_buckets;                               \
+    old_e_flags = h->e_flags;                                           \
+    old_d_flags = h->d_flags;                                           \
+    old_keys = h->keys;                                                 \
+    old_vals = h->vals;                                                 \
+    old_n_buckets = h->n_buckets;                                       \
     h->n_buckets = new_n_buckets;                                       \
     kh_alloc_##name(h);                                                 \
     /* relocate */                                                      \
-    khint_t i;                                                          \
     for( i=0 ; i<old_n_buckets ; i++ ){                                 \
       if( !__ac_isempty(old_e_flags, old_d_flags, i) ){                 \
         khint_t k = kh_put_##name(h, old_keys[i]);                      \

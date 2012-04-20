@@ -3877,6 +3877,7 @@ mrb_cstr_to_inum(mrb_state *mrb, const char *str, int base, int badcheck)
 //  long i;
 //  mrb_value z;
 //  BDIGIT *zds;
+  unsigned long val;
 
 #undef ISDIGIT
 #define ISDIGIT(c) ('0' <= (c) && (c) <= '9')
@@ -3992,7 +3993,7 @@ mrb_cstr_to_inum(mrb_state *mrb, const char *str, int base, int badcheck)
   }
   len *= strlen(str)*sizeof(char);
 
-    unsigned long val = strtoul((char*)str, &end, base);
+    val = strtoul((char*)str, &end, base);
 
     if (badcheck) {
       if (end == str) goto bad; /* no number */

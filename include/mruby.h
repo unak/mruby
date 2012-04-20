@@ -95,6 +95,9 @@ typedef struct mrb_value {
 #define FL_SET(x,f) do {if (FL_ABLE(x)) RBASIC(x)->flags |= (f);} while (0)
 #define FL_UNSET(x,f) do {if (FL_ABLE(x)) RBASIC(x)->flags &= ~(f);} while (0)
 
+#ifdef _WIN32
+#define inline __inline
+#endif
 static inline mrb_int
 mrb_special_const_p(mrb_value obj)
 {

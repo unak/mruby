@@ -1,0 +1,137 @@
+# makefile discription.
+# basic build file for Rite-Interpreter
+# 11.Apr.2011 coded by Kenji Yoshimoto.
+# 31.Aug.2011 coded by Hiroshi Mimaki.
+
+# project-specific macros
+# extension of the executable-file is modifiable(.exe .out ...)
+BASEDIR = ../../src
+TARGET = ../../bin/mruby
+EXE = $(TARGET).exe
+YSRC = $(BASEDIR)/parse.y
+YC = $(BASEDIR)/y.tab.c
+EXCEPT1 = $(YC) $(BASEDIR)/minimain.c $(BASEDIR)/dump.c $(BASEDIR)/cdump.c
+SRCS1 = $(BASEDIR)/array.c \
+	$(BASEDIR)/ascii.c \
+	$(BASEDIR)/class.c \
+	$(BASEDIR)/codegen.c \
+	$(BASEDIR)/compar.c \
+	$(BASEDIR)/crc.c \
+	$(BASEDIR)/encoding.c \
+	$(BASEDIR)/enum.c \
+	$(BASEDIR)/error.c \
+	$(BASEDIR)/etc.c \
+	$(BASEDIR)/gc.c \
+	$(BASEDIR)/hash.c \
+	$(BASEDIR)/init.c \
+	$(BASEDIR)/init_ext.c \
+	$(BASEDIR)/kernel.c \
+	$(BASEDIR)/load.c \
+	$(BASEDIR)/numeric.c \
+	$(BASEDIR)/object.c \
+	$(BASEDIR)/pool.c \
+	$(BASEDIR)/print.c \
+	$(BASEDIR)/proc.c \
+	$(BASEDIR)/range.c \
+	$(BASEDIR)/re.c \
+	$(BASEDIR)/regcomp.c \
+	$(BASEDIR)/regenc.c \
+	$(BASEDIR)/regerror.c \
+	$(BASEDIR)/regexec.c \
+	$(BASEDIR)/regparse.c \
+	$(BASEDIR)/sprintf.c \
+	$(BASEDIR)/st.c \
+	$(BASEDIR)/state.c \
+	$(BASEDIR)/string.c \
+	$(BASEDIR)/struct.c \
+	$(BASEDIR)/symbol.c \
+	$(BASEDIR)/transcode.c \
+	$(BASEDIR)/unicode.c \
+	$(BASEDIR)/us_ascii.c \
+	$(BASEDIR)/utf_8.c \
+	$(BASEDIR)/variable.c \
+	$(BASEDIR)/version.c \
+	$(BASEDIR)/vm.c \
+	$(BASEDIR)/y.tab.c
+OBJY = $(YC:.c=.obj)
+OBJ0 = $(BASEDIR)/../tools/mruby/mruby.obj
+OBJ1 = $(SRCS1:.c=.obj)
+#OBJ2 = $(patsubst %.c,%.o,$(wildcard $(BASEDIR)/ext/regex/*.c))
+#OBJ3 = $(patsubst %.c,%.o,$(wildcard $(BASEDIR)/ext/enc/*.c))
+OBJS = $(OBJ0) $(OBJ1) $(OBJ2) $(OBJ3)
+# mruby libraries
+EXTC = $(BASEDIR)/../mrblib/mrblib.c
+EXTRB = $(BASEDIR)/../mrblib/array.rb \
+	$(BASEDIR)/../mrblib/compar.rb \
+	$(BASEDIR)/../mrblib/enum.rb \
+	$(BASEDIR)/../mrblib/error.rb \
+	$(BASEDIR)/../mrblib/hash.rb \
+	$(BASEDIR)/../mrblib/kernel.rb \
+	$(BASEDIR)/../mrblib/numeric.rb \
+	$(BASEDIR)/../mrblib/print.rb \
+	$(BASEDIR)/../mrblib/range.rb \
+	$(BASEDIR)/../mrblib/string.rb \
+	$(BASEDIR)/../mrblib/struct.rb
+EXTM = $(EXTC:.c=.obj)
+# ext libraries
+#EXT1 = $(patsubst %.c,%.o,$(wildcard $(BASEDIR)/../ext/socket/*.c))
+EXTS = $(EXT1)
+
+# libraries, includes
+LIBS =
+INCLUDES = -I$(BASEDIR) -I$(BASEDIR)/../include
+#INCLUDES = -I$(RITEVM_ROOT)
+
+# compiler, linker (gcc)
+CC = gcc
+LL = gcc
+YACC = bison
+DEBUG_MODE = 1
+#if $(DEBUG_MODE) == 1
+CFLAGS = -Zi
+#else
+CFLAGS = -O2
+#endif
+ALL_CFLAGS = -nologo -W3 $(CFLAGS)
+MAKE_FLAGS = CC="$(CC)" LL="$(LL)" -$(MAKEFLAGS) -f Makefile.vc
+
+##############################
+# generic build targets, rules
+
+.PHONY : all
+all : $(EXTM) $(EXE)
+	@echo "make: built targets of tools/mruby"
+
+# executable constructed using linker from object files
+$(EXE) : $(OBJS) $(OBJY) $(EXTM) $(EXTS)
+	$(LL) -Fe$@ $(OBJS) $(OBJY) $(EXTM) $(EXTS) $(LIBS)
+
+#-include $(OBJS:.o=.d) $(OBJY:.o=.d)
+
+# objects compiled from source
+.c.obj:
+	$(CC) $(ALL_CFLAGS) $(INCLUDES) -c $< -Fo$@
+
+# mruby library compile
+$(EXTM) : $(EXTRB) $(OBJS) $(OBJY)
+	cd ..\..\mrblib
+	$(MAKE) $(MAKE_FLAGS)
+	cd ..\tools\mruby
+
+# parser complie
+$(OBJY) : $(YC)
+	$(CC) $(ALL_CFLAGS) -MMD $(INCLUDES) -c $(YC) -Fo$(OBJY)
+
+# yacc complie
+$(YC) : $(YSRC)
+	$(YACC) -o $(YC) $(YSRC)
+
+# clean up
+#.PHONY : clean #cleandep
+clean :
+	cd ..\..\mrblib
+	$(MAKE) clean $(MAKE_FLAGS)
+	cd ..\tools\mruby
+	-rm -f $(EXE) $(OBJS) $(OBJY) $(YC) $(EXTS)
+	-rm -f $(OBJS:.o=.d) $(OBJY:.o=.d) $(EXTS:.o=.d)
+	@echo "make: removing targets, objects and depend files of tools/mruby"

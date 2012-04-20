@@ -307,7 +307,7 @@ localjump_error(mrb_state *mrb, const char *kind)
   (r).value.p = (void*)(v);\
 }
 
-#define DIRECT_THREADED
+/*#define DIRECT_THREADED*/
 #ifndef DIRECT_THREADED
 
 #define INIT_DISPACTH for (;;) { i = *pc; switch (GET_OPCODE(i)) {

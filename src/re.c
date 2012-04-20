@@ -85,9 +85,9 @@ mrb_reg_s_new_instance(mrb_state *mrb, /*int argc, mrb_value *argv, */mrb_value 
   //mrb_obj_call_init(obj, argc, argv);...mrb_funcall2(obj, idInitialize, argc, argv);
   mrb_value argv[16];
   int argc;
+  struct RRegexp *re;
 
   mrb_get_args(mrb, "*", &argv, &argc);
-  struct RRegexp *re;
   re = mrb_obj_alloc(mrb, MRB_TT_REGEX, mrb->regex_class);
   re->ptr = 0;
   re->src = mrb_nil_value();
@@ -1879,10 +1879,13 @@ mrb_match_begin(mrb_state *mrb, mrb_value match/*, mrb_value n*/)
 {
   mrb_value argv[16];
   int argc;
+  mrb_value n;
+  int i;
+  struct re_registers *regs;
   mrb_get_args(mrb, "*", &argv, &argc);
-  mrb_value n = argv[0];
-  int i = match_backref_number(mrb, match, n);
-  struct re_registers *regs = RMATCH_REGS(match);
+  n = argv[0];
+  i = match_backref_number(mrb, match, n);
+  regs = RMATCH_REGS(match);
 
   match_check(mrb, match);
   if (i < 0 || regs->num_regs <= i)
@@ -1964,10 +1967,13 @@ mrb_match_end(mrb_state *mrb, mrb_value match/*, mrb_value n*/)
 {
   mrb_value argv[16];
   int argc;
+  mrb_value n;
+  int i;
+  struct re_registers *regs;
   mrb_get_args(mrb, "*", &argv, &argc);
-  mrb_value n = argv[0];
-  int i = match_backref_number(mrb, match, n);
-  struct re_registers *regs = RMATCH_REGS(match);
+  n = argv[0];
+  i = match_backref_number(mrb, match, n);
+  regs = RMATCH_REGS(match);
 
   match_check(mrb, match);
   if (i < 0 || regs->num_regs <= i)
@@ -1988,9 +1994,10 @@ mrb_match_init_copy(mrb_state *mrb, mrb_value obj/*, mrb_value orig*/)
   mrb_value argv[16];
   int argc;
   struct rmatch *rm;
+  mrb_value orig;
 
   mrb_get_args(mrb, "*", &argv, &argc);
-  mrb_value orig = argv[0];
+  orig = argv[0];
 
   if (mrb_obj_equal(mrb, obj, orig)) return obj;
 
@@ -2069,10 +2076,11 @@ static mrb_value
 mrb_match_offset(mrb_state *mrb, mrb_value match/*, mrb_value n*/)
 {
   mrb_value n;
+  int i;
   struct re_registers *regs = RMATCH_REGS(match);
 
   mrb_get_args(mrb, "o", &n);
-  int i = match_backref_number(mrb, match, n);
+  i = match_backref_number(mrb, match, n);
 
   match_check(mrb, match);
   if (i < 0 || regs->num_regs <= i)
