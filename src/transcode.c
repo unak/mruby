@@ -632,14 +632,14 @@ transcode_restartable0(mrb_state *mrb,
             }
             continue;
         case FUNii:
-          next_info = (mrb_value)(*tr->func_ii)(TRANSCODING_STATE(tc), next_info);
+          next_info = (*tr->func_ii)(TRANSCODING_STATE(tc), next_info);
           goto follow_info;
         case FUNsi:
             {
                 const unsigned char *char_start;
                 size_t char_len;
                 char_start = transcode_char_start(tc, *in_pos, inchar_start, in_p, &char_len);
-                next_info = (mrb_value)(*tr->func_si)(TRANSCODING_STATE(tc), char_start, (size_t)char_len);
+                next_info = (*tr->func_si)(TRANSCODING_STATE(tc), char_start, (size_t)char_len);
                 goto follow_info;
             }
         case FUNio:
@@ -2694,10 +2694,10 @@ str_encode_bang(mrb_state *mrb, /*int argc, mrb_value *argv,*/ mrb_value str)
 {
   mrb_value argv[16];
   int argc;
-
-  mrb_get_args(mrb, "*", &argv, &argc);
   mrb_value newstr;
   int encidx;
+
+  mrb_get_args(mrb, "*", &argv, &argc);
 
   //if (OBJ_FROZEN(str)) { /* in future, may use str_frozen_check from string.c, but that's currently static */
   //  mrb_raise(mrb, mrb->eRuntimeError_class, "string frozen");
@@ -2770,10 +2770,12 @@ str_encode(mrb_state *mrb, /*int argc, mrb_value *argv,*/ mrb_value str)
 {
   mrb_value argv[16];
   int argc;
+  mrb_value newstr;
+  int encidx;
 
   mrb_get_args(mrb, "*", &argv, &argc);
-  mrb_value newstr = str;
-  int encidx = str_transcode(mrb, argc, argv, &newstr);
+  newstr = str;
+  encidx = str_transcode(mrb, argc, argv, &newstr);
 
   if (encidx < 0) return mrb_str_dup(mrb, str);
   if (mrb_obj_equal(mrb, newstr, str)) {
@@ -3908,11 +3910,12 @@ econv_insert_output(mrb_state *mrb, mrb_value self)
 {
 	mrb_value string;
     const char *insert_enc;
+    mrb_econv_t *ec;
 
     int ret;
 
     mrb_get_args(mrb, "o", &string);
-    mrb_econv_t *ec = check_econv(mrb, self);
+    ec = check_econv(mrb, self);
 
     //StringValue(string);
     mrb_string_value(mrb, &string);

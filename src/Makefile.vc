@@ -1,0 +1,137 @@
+# makefile discription.
+# basic build file for RiteVM library
+# 11.Apr.2011 coded by Kenji Yoshimoto.
+# 31.Aug.2011 coded by Hiroshi Mimaki.
+
+# project-specific macros
+# extension of the executable-file is modifiable(.exe .out ...)
+BASEDIR = .
+TARGET = ../lib/ritevm
+MLIB = $(TARGET).lib
+YSRC = $(BASEDIR)/parse.y
+YC = $(BASEDIR)/y.tab.c
+EXCEPT1 = $(YC) $(BASEDIR)/minimain.c $(BASEDIR)/compile.c $(BASEDIR)/dump.c $(BASEDIR)/cdump.c
+SRC1 = array.c \
+	ascii.c \
+	class.c \
+	codegen.c \
+	compar.c \
+	crc.c \
+	encoding.c \
+	enum.c \
+	error.c \
+	etc.c \
+	gc.c \
+	hash.c \
+	init.c \
+	init_ext.c \
+	kernel.c \
+	load.c \
+	numeric.c \
+	object.c \
+	pool.c \
+	print.c \
+	proc.c \
+	range.c \
+	re.c \
+	regcomp.c \
+	regenc.c \
+	regerror.c \
+	regexec.c \
+	regparse.c \
+	sprintf.c \
+	st.c \
+	state.c \
+	string.c \
+	struct.c \
+	symbol.c \
+	transcode.c \
+	unicode.c \
+	us_ascii.c \
+	utf_8.c \
+	variable.c \
+	version.c \
+	vm.c \
+	y.tab.c
+OBJY = $(YC:.c=.obj)
+OBJ1 = $(SRC1:.c=.obj)
+#OBJ2 = $(patsubst %.c,%.o,$(wildcard $(BASEDIR)/ext/regex/*.c))
+#OBJ3 = $(patsubst %.c,%.o,$(wildcard $(BASEDIR)/ext/enc/*.c))
+OBJS = $(OBJ1) $(OBJ2) $(OBJ3)
+# mruby libraries
+EXTC = $(BASEDIR)/../mrblib/mrblib.c
+EXTRB = $(BASEDIR)/../mrblib/array.rb \
+	$(BASEDIR)/../mrblib/compar.rb \
+	$(BASEDIR)/../mrblib/enum.rb \
+	$(BASEDIR)/../mrblib/error.rb \
+	$(BASEDIR)/../mrblib/hash.rb \
+	$(BASEDIR)/../mrblib/kernel.rb \
+	$(BASEDIR)/../mrblib/numeric.rb \
+	$(BASEDIR)/../mrblib/print.rb \
+	$(BASEDIR)/../mrblib/range.rb \
+	$(BASEDIR)/../mrblib/string.rb \
+	$(BASEDIR)/../mrblib/struct.rb
+EXTM = $(EXTC:.c=.obj)
+# extend libraries
+#EXT1 = $(patsubst %.c,%.o,$(wildcard $(BASEDIR)/ext/socket/*.c))
+EXTS = $(EXT1)
+
+# libraries, includes
+INCLUDES = -I$(BASEDIR) -I$(BASEDIR)/../include
+#INCLUDES = -I$(RITEVM_ROOT)
+
+# compiler, linker (gcc)
+CC = cl.exe
+AR = lib
+YACC = bison
+
+DEBUG_MODE = 1
+#if $(DEBUG_MODE) == 1
+CFLAGS = -Zi
+#else
+CFLAGS = -O2
+#endif
+ALL_CFLAGS = -nologo -W3 $(CFLAGS)
+MAKE_FLAGS = CC="$(CC)" LL="$(LL)" -$(MAKEFLAGS) -f Makefile.vc
+
+##############################
+# generic build targets, rules
+
+.PHONY : all
+all : $(EXTM) $(MLIB)
+	@echo "make: built targets of src"
+
+# executable constructed using linker from object files
+$(MLIB) : $(OBJS) $(OBJY) $(EXTM) $(EXTS)
+	$(AR) /OUT:$@ $(OBJS) $(OBJY) $(EXTM) $(EXTS)
+
+#-include $(OBJS:.o=.d) $(OBJY:.o=.d)
+
+# objects compiled from source
+.c.obj:
+	$(CC) $(ALL_CFLAGS) $(INCLUDES) -c $< -Fo$@
+
+# mruby library compile
+$(EXTM) : $(EXTRB) $(OBJS) $(OBJY)
+	cd ..\mrblib
+	$(MAKE) $(MAKE_FLAGS)
+	cd ..\src
+
+# parser complie
+$(OBJY) : $(YC)
+	$(CC) $(ALL_CFLAGS) $(INCLUDES) -c $(YC) -Fo$(OBJY)
+
+# yacc complie
+$(YC) : $(YSRC)
+	$(YACC) -o $(YC) $(YSRC)
+
+# clean up
+#.PHONY : clean #cleandep
+clean :
+	cd ..\mrblib
+	$(MAKE) clean $(MAKE_FLAGS)
+	cd ..\src
+	-rm -f $(MLIB) $(OBJS) $(OBJY) $(YC)
+	-rm -f $(OBJS:.o=.d) $(OBJY:.o=.d)
+	@echo "make: removing targets, objects and depend files of src"
+

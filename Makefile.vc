@@ -1,0 +1,183 @@
+# makefile discription.
+# basic build file for Rite-VM(mruby)
+# 11.Apr.2011 coded by Kenji Yoshimoto.
+# 17.Jan.2012 coded by Hiroshi Mimaki.
+
+# project-specific macros
+# extension of the executable-file is modifiable(.exe .out ...)
+TARGET = bin/mrubysample
+RITEVM = lib/ritevm
+MRUBY = tools/mruby/mruby
+EXE = $(TARGET).exe
+MLIB = $(RITEVM).lib
+MRB = $(MRUBY).exe
+MSRC = src/minimain.c
+YSRC = src/parse.y
+YC = src/y.tab.c
+SRC1 = src/array.c \
+	src/ascii.c \
+	src/cdump.c \
+	src/class.c \
+	src/codegen.c \
+	src/compar.c \
+	src/crc.c \
+	src/dump.c \
+	src/encoding.c \
+	src/enum.c \
+	src/error.c \
+	src/etc.c \
+	src/gc.c \
+	src/hash.c \
+	src/init.c \
+	src/init_ext.c \
+	src/kernel.c \
+	src/load.c \
+	src/numeric.c \
+	src/object.c \
+	src/pool.c \
+	src/print.c \
+	src/proc.c \
+	src/range.c \
+	src/re.c \
+	src/regcomp.c \
+	src/regenc.c \
+	src/regerror.c \
+	src/regexec.c \
+	src/regparse.c \
+	src/sprintf.c \
+	src/st.c \
+	src/state.c \
+	src/string.c \
+	src/struct.c \
+	src/symbol.c \
+	src/transcode.c \
+	src/unicode.c \
+	src/us_ascii.c \
+	src/utf_8.c \
+	src/variable.c \
+	src/version.c \
+	src/vm.c
+OBJM = $(MSRC:.c=.obj)
+OBJY = $(YC:.c=.obj)
+OBJ1 = $(SRC1:.c=.obj)
+#OBJ2 = $(patsubst %.c,%.o,$(wildcard ext/regex/*.c))
+#OBJ3 = $(patsubst %.c,%.o,$(wildcard ext/enc/*.c))
+OBJS = $(OBJ1) $(OBJ2) $(OBJ3)
+# mruby libraries
+EXTC = mrblib/mrblib.c
+EXTRB = mrblib/array.rb \
+	mrblib/compar.rb \
+	mrblib/enum.rb \
+	mrblib/error.rb \
+	mrblib/hash.rb \
+	mrblib/kernel.rb \
+	mrblib/numeric.rb \
+	mrblib/print.rb \
+	mrblib/range.rb \
+	mrblib/string.rb \
+	mrblib/struct.rb
+EXT0 = src/$(EXTC:.c=.obj)
+# ext libraries
+EXTS = $(EXT0)
+
+# libraries, includes
+LIBS = $(MLIB)
+INCLUDES = -I./src -I./include
+
+# library for iOS
+IOSLIB = $(RITEVM)-ios.a
+IOSSIMLIB = $(RITEVM)-iossim.a
+IOSDEVLIB = $(RITEVM)-iosdev.a
+IOSSIMCC = xcrun -sdk iphoneos llvm-gcc-4.2 -arch i386 -isysroot "/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.0.sdk/"
+IOSDEVCC = xcrun -sdk iphoneos llvm-gcc-4.2 -arch armv7 -isysroot "/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS5.0.sdk/"
+
+# compiler, linker (gcc)
+CC = cl.exe
+LL = cl.exe
+YACC = bison
+DEBUG_MODE = 1
+#if $(DEBUG_MODE) == 1
+CFLAGS = -g
+#else
+CFLAGS = -O2
+#endif
+ALL_CFLAGS = -nologo -W3 $(CFLAGS)
+MAKE_FLAGS = CC="$(CC)" LL="$(LL)" -$(MAKEFLAGS) -f Makefile.vc
+
+##############################
+# generic build targets, rules
+
+.PHONY : all
+all : $(MLIB) $(MRB) $(EXE)
+	@echo "make: built targets of topdir"
+
+##############################
+# make library for iOS
+#.PHONY : ios
+ios : $(IOSLIB)
+
+$(IOSLIB) : $(IOSSIMLIB) $(IOSDEVLIB)
+	lipo -arch i386 $(IOSSIMLIB) -arch armv7 $(IOSDEVLIB) -create -output $(IOSLIB)
+
+$(IOSSIMLIB) :
+	cd src
+	$(MAKE) clean $(MAKE_FLAGS)
+	$(MAKE) $(MAKE_FLAGS) CC="$(IOSSIMCC)" LL="$(IOSSIMCC)"
+	cd ..
+	cp $(MLIB) $(IOSSIMLIB)
+
+$(IOSDEVLIB) :
+	cd src
+	$(MAKE) clean $(MAKE_FLAGS)
+	$(MAKE) $(MAKE_FLAGS) CC="$(IOSDEVCC)" LL="$(IOSDEVCC)"
+	cd ..
+	cp $(MLIB) $(IOSDEVLIB)
+
+# executable constructed using linker from object files
+$(EXE) : $(OBJM) $(MLIB)
+	$(LL) -Fe$@ $(OBJM) $(LIBS)
+
+#-include $(OBJS:.o=.d)
+
+# src compile
+$(MLIB) : $(EXTS) $(OBJS) $(OBJY)
+	cd src
+	$(MAKE) $(MAKE_FLAGS)
+	cd ..
+
+# mruby interpreter compile
+$(MRB) : $(EXTS) $(OBJS) $(OBJY)
+	cd tools\mruby
+	$(MAKE) $(MAKE_FLAGS)
+	cd ..\..
+
+# objects compiled from source
+$(OBJS) :
+	cd src
+	$(MAKE) $(MAKE_FLAGS)
+	cd ..\tools\mruby
+	$(MAKE) $(MAKE_FLAGS)
+	cd ..\..
+
+# extend libraries complile
+$(EXTS) : $(EXTRB)
+	cd mrblib
+	$(MAKE) $(MAKE_FLAGS)
+	cd ..
+
+# test module compile
+$(OBJM) : $(MSRC)
+	$(CC) $(ALL_CFLAGS) $(INCLUDES) -c $(MSRC) -Fo$(OBJM)
+
+# clean up
+#.PHONY : clean
+clean :
+	cd src
+	$(MAKE) clean $(MAKE_FLAGS)
+	cd ..\tools\mruby
+	$(MAKE) clean $(MAKE_FLAGS)
+	cd ..\..
+	-rm -f $(EXE) $(OBJM)
+	-rm -f $(OBJM:.o=.d)
+	-rm -f $(IOSLIB) $(IOSSIMLIB) $(IOSDEVLIB)
+	@echo "make: removing targets, objects and depend files of topdir"
