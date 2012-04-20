@@ -94,6 +94,9 @@ typedef struct mrb_value {
 #define FL_SET(x,f) do {if (FL_ABLE(x)) RBASIC(x)->flags |= (f);} while (0)
 #define FL_UNSET(x,f) do {if (FL_ABLE(x)) RBASIC(x)->flags &= ~(f);} while (0)
 
+#ifdef _WIN32
+#define inline __inline
+#endif
 static inline mrb_int
 mrb_special_const_p(mrb_value obj)
 {
@@ -467,7 +470,11 @@ void mrb_bug(const char *fmt, ...);
 #ifdef __GNUC__
 # define NUM2CHR(x) __extension__ ({mrb_value num2chr_x = (x); NUM2CHR_internal(num2chr_x);})
 #else
+<<<<<<< HEAD
 /* TODO: there is no definitions of RSTRING_* here, so cannot compile.
+=======
+/* TODO: there is no definitions of RSTRING_*
+>>>>>>> Visual C++ support.
 static inline char
 NUM2CHR(mrb_value x)
 {

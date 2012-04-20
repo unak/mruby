@@ -25,7 +25,6 @@ extern "C" {
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
 #endif
-#include <inttypes.h>
 
 #ifndef CHAR_BIT
 # ifdef HAVE_LIMITS_H

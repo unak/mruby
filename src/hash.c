@@ -213,10 +213,11 @@ static mrb_value
 hash_s_new(mrb_state *mrb, mrb_value klass)
 {
   mrb_value *argv;
+  mrb_value hash;
   int argc;
 
   mrb_get_args(mrb, "*", &argv, &argc);
-  mrb_value hash = mrb_hash_new_capa(mrb, 0);
+  hash = mrb_hash_new_capa(mrb, 0);
   mrb_obj_call_init(mrb, hash, argc, argv);
   return hash;
 }
